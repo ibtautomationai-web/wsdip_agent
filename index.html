@@ -10,8 +10,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- SheetJS for client-side Excel Parsing -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- PDF.js for parsing PDF job description files -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
 
   <style>
     /* DESIGN SYSTEM: Modern Glassmorphism & Cyber Slate Theme */
@@ -1295,14 +1295,6 @@
         <h1><i class="fa-solid fa-graduation-cap"></i> WSDip Interactive Portal</h1>
         <p>ITE Partners and WSDip Course Directory</p>
       </div>
-      <div class="header-controls">
-        <button class="btn" id="btn-open-uploader" onclick="toggleUploader(true)">
-          <i class="fa-solid fa-cloud-arrow-up"></i> Update Datasets
-        </button>
-        <button class="btn btn-accent" onclick="resetToDefaults()">
-          <i class="fa-solid fa-rotate-left"></i> Restore Defaults
-        </button>
-      </div>
     </header>
 
     <!-- NAVIGATION TABS -->
@@ -1630,33 +1622,7 @@
     </div>
   </div>
 
-  <!-- UPDATE DATA BOX -->
-  <div class="uploader-overlay" id="uploader-overlay" onclick="onUploaderOuterClick(event)">
-    <div class="uploader-box">
-      <h3 class="search-title"><i class="fa-solid fa-cloud-arrow-up"></i> Update Datasets</h3>
-      <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 5px;">Upload updated Excel sheets to replace the offline registries.</p>
-      
-      <div class="upload-zone">
-        <i class="fa-solid fa-file-excel"></i>
-        <h4>Upload Company List w AM.xlsx</h4>
-        <p>Drag & Drop or click to browse</p>
-        <input type="file" id="upload-companies" accept=".xlsx" onchange="handleExcelUpload(event, 'companies')">
-      </div>
 
-      <div class="upload-zone">
-        <i class="fa-solid fa-file-excel"></i>
-        <h4>Upload 2026 WSDip Course Pointers.xlsx</h4>
-        <p>Drag & Drop or click to browse</p>
-        <input type="file" id="upload-courses" accept=".xlsx" onchange="handleExcelUpload(event, 'courses')">
-      </div>
-
-      <div class="update-status" id="upload-status-box">Status message</div>
-
-      <button class="btn" style="margin-top: 15px; width: 100%; justify-content: center;" onclick="toggleUploader(false)">
-        Close Panel
-      </button>
-    </div>
-  </div>
 
   <!-- EMBEDDED CSV DATASET PLACEHOLDERS -->
   <script>
@@ -4225,7 +4191,7 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
       let classification = "Diversified Services & Trading";
       let icon = "fa-building";
       
-      if (/HOTEL|SHANGRI|GOODWOOD|ROYAL|RESTAURANT|FOOD|CATERING|CULINARY|BAKERY|SWEETS|DINING|MCDONALD|BURGER|CAFE|COFFEE|KECK SENG|RESORT|BEVERAGE|BREWERIES|BREWERY/i.test(name)) {
+      if (/VOCO|HOTEL|SHANGRI|GOODWOOD|ROYAL|RESTAURANT|FOOD|CATERING|CULINARY|BAKERY|SWEETS|DINING|MCDONALD|BURGER|CAFE|COFFEE|KECK SENG|RESORT|BEVERAGE|BREWERIES|BREWERY/i.test(name)) {
         industry = "Hospitality";
         classification = "F&B and Accommodation Services";
         icon = "fa-hotel";
@@ -4329,10 +4295,8 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
 
     // Load datasets from LocalStorage (if updated) or fall back to Embedded CSV strings
     function initData() {
-      // 1. Load Company Data
-      const localCompanyCsv = localStorage.getItem('wsdip_local_company_csv');
-      const companyCsvToParse = localCompanyCsv ? localCompanyCsv : EMBEDDED_COMPANY_CSV;
-      const rawCompanies = parseCSVToObjects(companyCsvToParse, ['uen', 'name', 'scheme', 'am']);
+      // 1. Load Company Data strictly from compiled embedded CSV
+      const rawCompanies = parseCSVToObjects(EMBEDDED_COMPANY_CSV, ['uen', 'name', 'scheme', 'am']);
       
       // Filter out empty rows or headers
       const filteredCompanies = rawCompanies.filter(c => c.uen && c.uen.toLowerCase() !== 'company_uen');
@@ -4382,10 +4346,8 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
         return enriched;
       });
 
-      // 2. Load Course Data
-      const localCourseCsv = localStorage.getItem('wsdip_local_course_csv');
-      const courseCsvToParse = localCourseCsv ? localCourseCsv : EMBEDDED_COURSE_CSV;
-      courseData = parseCSVToObjects(courseCsvToParse, [
+      // 2. Load Course Data strictly from compiled embedded CSV
+      courseData = parseCSVToObjects(EMBEDDED_COURSE_CSV, [
         'num', 'course_code', 'plan_code', 'course_name', 'io', 'job_roles', 'nature_of_companies', 'requirements', 'red_flags', 'remarks'
       ]);
       courseData = courseData.filter(c => c.course_code && c.course_code.toLowerCase() !== 'course_code');
@@ -4526,6 +4488,67 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
       });
     }
 
+    function showManualOverrideDropdown() {
+      const wrapper = document.getElementById('manual-override-wrapper');
+      if (wrapper) wrapper.style.display = 'block';
+      const toggle = document.getElementById('manual-override-toggle');
+      if (toggle) toggle.style.display = 'none';
+    }
+
+    function getAdvisorHTML(companyName) {
+      const escapedName = escapeHtml(companyName);
+      return `
+        <div class="unregistered-advisor" style="margin-top: 25px;">
+          <h3 class="section-title" style="font-size: 1.15rem; margin-bottom: 8px;"><i class="fa-solid fa-shield-halved"></i> WSDip Engagement Advisor</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px;">
+            Find matching diplomas by pasting the company's profile description or uploading a job description file below.
+          </p>
+          
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 15px;">
+            <a href="https://www.google.com/search?q=${encodeURIComponent(companyName)}+Singapore+industry" target="_blank" class="btn" style="display: inline-flex; width: fit-content; font-size: 0.85rem; padding: 8px 14px; background: rgba(0, 242, 254, 0.08); border-color: var(--accent-cyan); color: var(--accent-cyan); margin: 0;">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> Search Google for "${escapedName}"
+            </a>
+          </div>
+
+          <div style="margin-bottom: 15px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); padding: 15px; border-radius: 10px;">
+            <label class="info-label" style="display:block; margin-bottom:8px; font-weight:600;"><i class="fa-solid fa-file-import" style="color: var(--accent-cyan);"></i> Upload Job Description / Profile File (.txt or .pdf)</label>
+            <input type="file" id="advisor-file-upload" accept=".txt,.pdf" onchange="handleJobDescriptionUpload(event, '${escapedName}')" style="display: block; width: 100%; font-size: 0.85rem; color: var(--text-main); background: rgba(11, 15, 25, 0.6); padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: var(--transition-smooth);">
+            <div id="advisor-upload-status" class="update-status" style="display:none; margin-top: 10px;"></div>
+          </div>
+
+          <div style="margin-bottom: 15px;">
+            <label class="info-label" style="display:block; margin-bottom:6px;">Smart Text Matcher (Paste company description / website 'About Us' text)</label>
+            <textarea id="advisor-pasted-text" class="search-input" style="height: 90px; padding: 10px; margin-bottom: 5px; font-family: inherit; resize: vertical;" placeholder="Paste company profile details or job description here to automatically identify the industry and courses..." oninput="onPastedTextChange('${escapedName}')"></textarea>
+          </div>
+
+          <!-- Collapsible Manual Override Option -->
+          <div id="manual-override-container" style="margin-bottom: 15px;">
+            <a href="javascript:void(0)" id="manual-override-toggle" onclick="showManualOverrideDropdown()" style="font-size: 0.85rem; color: var(--accent-blue); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 500;">
+              <i class="fa-solid fa-sliders"></i> Or manually select industry sector...
+            </a>
+            <div id="manual-override-wrapper" style="display: none; margin-top: 10px;">
+              <label class="info-label" style="display:block; margin-bottom:6px;">Manual Industry Override</label>
+              <select id="advisor-industry" class="select-industry" onchange="runAdvisorMatching('${escapedName}')">
+                <option value="">-- Select Industry Sector --</option>
+                <option value="Aviation">Aviation / Aerospace / Airport Ground Handling</option>
+                <option value="Logistics">Logistics / Warehouse / Supply Chain / Maritime</option>
+                <option value="Hospitality">Hospitality / Hotel / Restaurant / Food & Beverage</option>
+                <option value="Information Technology">Information Technology / Cloud / Software / Cyber Security</option>
+                <option value="Built Environment">Building Services / Property Management / Facilities / Architecture</option>
+                <option value="Microelectronics">Microelectronics / Semiconductor Manufacturing</option>
+                <option value="Manufacturing">Advanced Manufacturing / Automation Engineering / Precision Engineering</option>
+                <option value="Health">Health Science / Nursing / Elderly Care / Clinics</option>
+                <option value="Landscape">Landscaping / Agriculture / Horticulture / Arboriculture</option>
+                <option value="Finance">Accounting / Corporate Services / Finance</option>
+              </select>
+            </div>
+          </div>
+          
+          <div id="advisor-results-wrap"></div>
+        </div>
+      `;
+    }
+
     function selectCompany(company) {
       selectedCompany = company;
       
@@ -4543,15 +4566,29 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
       const detailPanel = document.getElementById('company-detail-panel');
       
       // Match WSDip courses
-      const recommendations = matchCoursesForCompany(company.name);
+      let recommendations = matchCoursesForCompany(company.name);
+      let matchMethod = "Name Keyword Match";
+
+      // If no name-based matches, fallback to matching using Company Snapshot (Industry)
+      if (recommendations.length === 0 && company.detected_industry) {
+        recommendations = matchCoursesForCompany(company.name, company.detected_industry);
+        matchMethod = "Company Snapshot (Industry) Match";
+      }
 
       let recsHtml = "";
       if (recommendations.length > 0) {
         recommendations.forEach(rec => {
+          if (matchMethod === "Company Snapshot (Industry) Match") {
+            rec.reasons.unshift(`Matched via Company Snapshot (${company.detected_industry})`);
+          }
           recsHtml += renderRecommendationCard(rec);
         });
       } else {
-        recsHtml = `<div class="no-results">No highly matching WSDip courses found automatically. Please check the Course Directory or check fallback recommendations.</div>`;
+        recsHtml = `
+          <div class="no-results" style="padding: 20px; border: 1px dashed var(--border-color); border-radius: 8px; background: rgba(255,255,255,0.01);">
+            <i class="fa-solid fa-circle-info" style="margin-bottom: 8px; color: var(--accent-amber);"></i><br/>
+            No automatic matches found using Name or Company Snapshot. Please use the Engagement Analysis below to find suitable courses.
+          </div>`;
       }
 
       detailPanel.innerHTML = `
@@ -4562,16 +4599,16 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
           </div>
           
           <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
-             <span class="course-tag ${getSectorTagClass(company.detected_industry)}" style="margin-bottom: 0;">
-                <i class="fa-solid ${company.icon}"></i> ${escapeHtml(company.detected_industry)}
+             <span class="course-tag ${getSectorTagClass(company.detected_industry)}" id="adv-tag" style="margin-bottom: 0;">
+                <i class="fa-solid ${company.icon}" id="adv-icon"></i> <span id="adv-industry-txt">${escapeHtml(company.detected_industry)}</span>
              </span>
              <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">
-                Classification: <strong>${escapeHtml(company.classification)}</strong>
+                Classification: <strong id="adv-class-txt">${escapeHtml(company.classification)}</strong>
              </span>
           </div>
           
           <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 12px; font-style: italic; background: rgba(255,255,255,0.02); padding: 10px 14px; border-radius: 8px; border: 1px dashed var(--border-color);">
-             <strong>Company Snapshot:</strong> ${escapeHtml(company.description_snapshot)}
+             <strong>Company Snapshot:</strong> <span id="adv-desc-txt">${escapeHtml(company.description_snapshot)}</span>
           </p>
 
           <div class="company-info-grid" style="margin-top: 15px;">
@@ -4590,11 +4627,24 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
           </div>
         </div>
 
-        <div class="recommendation-section">
-          <h3 class="section-title"><i class="fa-solid fa-star"></i> Recommended WSDip Course Matches</h3>
+        <div class="recommendation-section" style="margin-bottom: 30px;">
+          <h3 class="section-title">
+            <i class="fa-solid fa-star"></i> Recommended WSDip Course Matches
+            <span style="font-size: 0.75rem; color: var(--accent-cyan); font-weight: 500; margin-left: 10px; background: rgba(0, 242, 254, 0.1); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(0, 242, 254, 0.2);">
+              Method: ${matchMethod}
+            </span>
+          </h3>
           ${recsHtml}
         </div>
+
+        <div style="border-top: 1px solid var(--border-color); padding-top: 25px; margin-top: 25px;">
+          ${getAdvisorHTML(company.name)}
+        </div>
       `;
+
+      // Default override select to "" and hide it. Keep advisor results empty by default.
+      document.getElementById('advisor-industry').value = "";
+      document.getElementById('advisor-results-wrap').innerHTML = "";
     }
 
     function selectUnregisteredCompany(queryText) {
@@ -4638,40 +4688,12 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
           </div>
         </div>
 
-        <div class="unregistered-advisor">
-          <h3 class="section-title" style="font-size: 1.1rem; margin-bottom: 8px;"><i class="fa-solid fa-shield-halved"></i> WSDip Engagement Advisor</h3>
-          
-          <a href="https://www.google.com/search?q=${encodeURIComponent(cleanName)}+Singapore+industry" target="_blank" class="btn" style="display: inline-flex; width: fit-content; font-size: 0.85rem; padding: 8px 14px; margin-bottom: 15px; background: rgba(0, 242, 254, 0.08); border-color: var(--accent-cyan); color: var(--accent-cyan);">
-            <i class="fa-solid fa-arrow-up-right-from-square"></i> Search Google for "${escapeHtml(cleanName)}"
-          </a>
-
-          <div style="margin-bottom: 15px;">
-            <label class="info-label" style="display:block; margin-bottom:6px;">Smart Text Matcher (Paste company description / website 'About Us' text)</label>
-            <textarea id="advisor-pasted-text" class="search-input" style="height: 90px; padding: 10px; margin-bottom: 5px; font-family: inherit; resize: vertical;" placeholder="Paste company profile details from Google/Website here to automatically identify the industry and courses..." oninput="onPastedTextChange('${escapeHtml(cleanName)}')"></textarea>
-          </div>
-
-          <label class="info-label" style="display:block; margin-bottom:6px;">Manual Industry Override</label>
-          <select id="advisor-industry" class="select-industry" onchange="runAdvisorMatching('${escapeHtml(cleanName)}')">
-            <option value="">-- Select Industry Sector --</option>
-            <option value="Aviation">Aviation / Aerospace / Airport Ground Handling</option>
-            <option value="Logistics">Logistics / Warehouse / Supply Chain / Maritime</option>
-            <option value="Hospitality">Hospitality / Hotel / Restaurant / Food & Beverage</option>
-            <option value="Information Technology">Information Technology / Cloud / Software / Cyber Security</option>
-            <option value="Built Environment">Building Services / Property Management / Facilities / Architecture</option>
-            <option value="Microelectronics">Microelectronics / Semiconductor Manufacturing</option>
-            <option value="Manufacturing">Advanced Manufacturing / Automation Engineering / Precision Engineering</option>
-            <option value="Health">Health Science / Nursing / Elderly Care / Clinics</option>
-            <option value="Landscape">Landscaping / Agriculture / Horticulture / Arboriculture</option>
-            <option value="Finance">Accounting / Corporate Services / Finance</option>
-          </select>
-          
-          <div id="advisor-results-wrap"></div>
-        </div>
+        ${getAdvisorHTML(cleanName)}
       `;
 
-      // Auto-trigger matches based on the initial name-based classification
-      document.getElementById('advisor-industry').value = tempComp.detected_industry;
-      runAdvisorMatching(cleanName);
+      // Default override select to "" and hide it. Keep advisor results empty by default.
+      document.getElementById('advisor-industry').value = "";
+      document.getElementById('advisor-results-wrap').innerHTML = "";
     }
 
     function onPastedTextChange(companyName) {
@@ -4683,8 +4705,9 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
         // Fallback to name-based match
         const temp = { name: companyName };
         enrichCompanyRecord(temp);
-        select.value = temp.detected_industry;
-        runAdvisorMatching(companyName);
+        select.value = ""; // Default back to first option
+        
+        wrap.innerHTML = "";
         return;
       }
 
@@ -4827,30 +4850,25 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
       const cleanCompanyName = companyName.toUpperCase();
 
       // Filter tokens to ignore generic terms
-      const stopWords = ['PTE', 'LTD', 'SINGAPORE', 'PRIVATE', 'LIMITED', 'CO', 'AND', 'OF', 'THE', 'S', 'PTE.', 'LTD.'];
+      const stopWords = [
+        'PTE', 'LTD', 'SINGAPORE', 'PRIVATE', 'LIMITED', 'CO', 'AND', 'OF', 'THE', 'S', 'PTE.', 'LTD.',
+        'ASIA', 'PACIFIC', 'TECHNOLOGY', 'TECHNOLOGIES', 'SERVICES', 'SERVICE', 'GROUP', 'GROUPS', 
+        'HOLDINGS', 'HOLDING', 'SOLUTION', 'SOLUTIONS', 'SYSTEMS', 'SYSTEM', 'ENTERPRISE', 'ENTERPRISES', 
+        'CORP', 'CORPORATION', 'INT', 'INTERNATIONAL', 'GLOBAL'
+      ];
       const tokens = cleanCompanyName.split(/[\s,.\-()]+/).filter(tok => tok.length > 1 && !stopWords.includes(tok));
 
       courseData.forEach(course => {
         let score = 0;
         let reasons = [];
 
-        // 1. Sector mapping override
+        // 1. Sector mapping override (only if forcedIndustry is explicitly passed)
         if (forcedIndustry) {
           const matchedInd = checkIndustryMapping(forcedIndustry, course);
           if (matchedInd > 0) {
             score += matchedInd;
             reasons.push(`Selected Industry: ${forcedIndustry}`);
           }
-        } else {
-          // Automatic industry detection based on company name
-          const detectedSectors = autoDetectSectors(cleanCompanyName);
-          detectedSectors.forEach(sec => {
-            const indScore = checkIndustryMapping(sec, course);
-            if (indScore > 0) {
-              score += indScore;
-              reasons.push(`Detected Industry: ${sec}`);
-            }
-          });
         }
 
         // 2. Token mapping against course properties
@@ -4949,7 +4967,7 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
 
     function autoDetectSectors(companyName) {
       const sectors = [];
-      if (/HOTEL|SHANGRI|GOODWOOD|ROYAL|RESTAURANT|FOOD|CATERING|CULINARY|BAKERY|SWEETS|DINING|MCDONALD|BURGER/i.test(companyName)) sectors.push('Hospitality');
+      if (/VOCO|HOTEL|SHANGRI|GOODWOOD|ROYAL|RESTAURANT|FOOD|CATERING|CULINARY|BAKERY|SWEETS|DINING|MCDONALD|BURGER/i.test(companyName)) sectors.push('Hospitality');
       if (/AIR|AVIATION|AEROSPACE|AIRLINES|GROUND|HANDLING|SATS|DNATA|FLIGHT/i.test(companyName)) sectors.push('Aviation');
       if (/LOGISTICS|SHIPPING|WAREHOUSE|DISTRIPARK|DSV|YCH|EXPRESS|COURIER|FREIGHT|CARRIER|MARINE|PORT|AUTOMATION/i.test(companyName)) sectors.push('Logistics');
       if (/BUILDING|CONSTRUCTION|FACILITIES|PROPERTY|ESTATE|ARCHITECT|ENGINEERING|M&E|ELEVATOR|LIFT|KONE|SCHINDLER|OTIS|MITSUBISHI/i.test(companyName)) sectors.push('Built Environment');
@@ -5146,96 +5164,97 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
     }
 
     // ========================================================
-    // EXCEL UPLOADER & REFRESH LOGIC (PREMIUM UTILITY)
+    // JOB DESCRIPTION FILE UPLOADER LOGIC
     // ========================================================
-    function toggleUploader(show) {
-      document.getElementById('uploader-overlay').style.display = show ? 'flex' : 'none';
-      if (!show) {
-        // Clear status when closing
-        const statusBox = document.getElementById('upload-status-box');
-        statusBox.style.display = 'none';
-        statusBox.className = 'update-status';
-      }
-    }
-
-    function onUploaderOuterClick(e) {
-      if (e.target.id === 'uploader-overlay') {
-        toggleUploader(false);
-      }
-    }
-
-    function handleExcelUpload(event, type) {
+    function handleJobDescriptionUpload(event, companyName) {
       const file = event.target.files[0];
       if (!file) return;
 
-      const statusBox = document.getElementById('upload-status-box');
-      statusBox.style.display = 'block';
-      statusBox.className = 'update-status';
-      statusBox.innerText = `Reading sheet data...`;
+      const pasteTextarea = document.getElementById('advisor-pasted-text');
+      const statusIndicator = document.getElementById('advisor-upload-status');
+      
+      statusIndicator.style.display = 'block';
+      statusIndicator.className = 'update-status';
+      statusIndicator.style.background = 'rgba(255, 255, 255, 0.05)';
+      statusIndicator.style.color = 'var(--text-muted)';
+      statusIndicator.style.border = '1px solid var(--border-color)';
+      statusIndicator.innerText = `Reading file: ${file.name}...`;
 
       const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          
-          // Determine sheets
-          const sheetName = workbook.SheetNames[0];
-          const sheet = workbook.Sheets[sheetName];
-          
-          // Convert sheet to CSV format
-          const csvContent = XLSX.utils.sheet_to_csv(sheet);
-          
-          if (type === 'companies') {
-            localStorage.setItem('wsdip_local_company_csv', csvContent);
-            statusBox.className = 'update-status success';
-            statusBox.innerText = `Success! Local company registry updated successfully. (${workbook.SheetNames[0]} sheet imported)`;
-          } else if (type === 'courses') {
-            // Check if there are multiple sheets and import sheet2 (COURSE POINTERS_) if present
-            let targetSheet = workbook.Sheets['COURSE POINTERS_'];
-            if (!targetSheet) targetSheet = workbook.Sheets['COURSE POINTERS'];
-            if (!targetSheet) targetSheet = workbook.Sheets[workbook.SheetNames[0]];
 
-            const courseCsv = XLSX.utils.sheet_to_csv(targetSheet);
-            localStorage.setItem('wsdip_local_course_csv', courseCsv);
-            statusBox.className = 'update-status success';
-            statusBox.innerText = `Success! WSDip Course pointers updated successfully.`;
-          }
-
-          // Reload data in-memory and refresh UI
-          initData();
-          onCompanySearchInput();
-          renderCourseDirectory();
-        } catch (err) {
-          console.error(err);
-          statusBox.className = 'update-status error';
-          statusBox.innerText = `Error: Failed to parse excel file. Make sure it is a valid WSDip Excel list.`;
-        }
-      };
-      reader.readAsArrayBuffer(file);
-    }
-
-    function resetToDefaults() {
-      localStorage.removeItem('wsdip_local_company_csv');
-      localStorage.removeItem('wsdip_local_course_csv');
-      
-      initData();
-      
-      // Reset inputs & results
-      document.getElementById('company-search').value = "";
-      document.getElementById('company-results-container').innerHTML = "";
-      document.getElementById('company-detail-panel').innerHTML = `
-        <div class="welcome-detail">
-          <i class="fa-solid fa-building-circle-check"></i>
-          <h2>Company Search & WSDip Matching</h2>
-          <p>Type a UEN or company name on the left to see if it is an existing partner, discover its assigned Account Manager, and get tailored WSDip course recommendations based on the company's profile.</p>
-        </div>
-      `;
-      
-      document.getElementById('course-keyword').value = "";
-      renderCourseDirectory();
-      
-      alert("Portal datasets restored to original Excel versions successfully!");
+      // Check file type
+      if (file.name.endsWith('.pdf')) {
+        reader.onload = function(e) {
+          const typedarray = new Uint8Array(e.target.result);
+          
+          // Set Worker Options for PDFJS
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+          
+          pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
+            let maxPages = pdf.numPages;
+            let countPromises = [];
+            
+            statusIndicator.innerText = `Extracting text from PDF (total ${maxPages} pages)...`;
+            
+            for (let i = 1; i <= maxPages; i++) {
+              countPromises.push(
+                pdf.getPage(i).then(function(page) {
+                  return page.getTextContent().then(function(textContent) {
+                    return textContent.items.map(function(item) {
+                      return item.str;
+                    }).join(' ');
+                  });
+                })
+              );
+            }
+            
+            Promise.all(countPromises).then(function(texts) {
+              const fullText = texts.join('\n');
+              pasteTextarea.value = fullText;
+              
+              statusIndicator.className = 'update-status success';
+              statusIndicator.style.background = 'rgba(16, 185, 129, 0.1)';
+              statusIndicator.style.color = 'var(--accent-green)';
+              statusIndicator.style.border = '1px solid rgba(16, 185, 129, 0.2)';
+              statusIndicator.innerText = `Successfully loaded PDF text!`;
+              
+              // Trigger text parsing matching logic
+              onPastedTextChange(companyName);
+            }).catch(function(err) {
+              console.error(err);
+              statusIndicator.className = 'update-status error';
+              statusIndicator.style.background = 'rgba(239, 68, 68, 0.1)';
+              statusIndicator.style.color = '#fca5a5';
+              statusIndicator.style.border = '1px solid rgba(239, 68, 68, 0.2)';
+              statusIndicator.innerText = `Error parsing PDF text.`;
+            });
+          }).catch(function(err) {
+            console.error(err);
+            statusIndicator.className = 'update-status error';
+            statusIndicator.innerText = `Failed to load PDF document.`;
+          });
+        };
+        reader.readAsArrayBuffer(file);
+      } else if (file.name.endsWith('.txt')) {
+        reader.onload = function(e) {
+          pasteTextarea.value = e.target.result;
+          statusIndicator.className = 'update-status success';
+          statusIndicator.style.background = 'rgba(16, 185, 129, 0.1)';
+          statusIndicator.style.color = 'var(--accent-green)';
+          statusIndicator.style.border = '1px solid rgba(16, 185, 129, 0.2)';
+          statusIndicator.innerText = `Successfully loaded text file!`;
+          
+          // Trigger text parsing matching logic
+          onPastedTextChange(companyName);
+        };
+        reader.readAsText(file);
+      } else {
+        statusIndicator.className = 'update-status error';
+        statusIndicator.style.background = 'rgba(239, 68, 68, 0.1)';
+        statusIndicator.style.color = '#fca5a5';
+        statusIndicator.style.border = '1px solid rgba(239, 68, 68, 0.2)';
+        statusIndicator.innerText = `Unsupported file format. Please upload a .txt or .pdf file.`;
+      }
     }
 
     // HTML-Escape helper
