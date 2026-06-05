@@ -4218,6 +4218,115 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
     let courseData = [];
     let selectedCompany = null;
 
+    // BACKGROUND PROFILE SNAPSHOT & CLASSIFIER (100% Free, Zero API/Credits)
+    function enrichCompanyRecord(c) {
+      const name = c.name.toUpperCase();
+      let industry = "General Commerce";
+      let classification = "Diversified Services & Trading";
+      let icon = "fa-building";
+      
+      if (/HOTEL|SHANGRI|GOODWOOD|ROYAL|RESTAURANT|FOOD|CATERING|CULINARY|BAKERY|SWEETS|DINING|MCDONALD|BURGER|CAFE|COFFEE|KECK SENG|RESORT|BEVERAGE|BREWERIES|BREWERY/i.test(name)) {
+        industry = "Hospitality";
+        classification = "F&B and Accommodation Services";
+        icon = "fa-hotel";
+      } else if (/AIR|AVIATION|AEROSPACE|AIRLINES|GROUND|HANDLING|SATS|DNATA|FLIGHT|ROTOR|JET|CABIN|ENGINE/i.test(name)) {
+        industry = "Aviation";
+        classification = "Aerospace & Airport Ground Services";
+        icon = "fa-plane";
+      } else if (/LOGISTICS|SHIPPING|WAREHOUSE|DISTRIPARK|DSV|YCH|EXPRESS|COURIER|FREIGHT|CARRIER|MARINE|PORT|AUTOMATION|SHIPPING|CARGO|CONTAINER|TRANSPORT|TRUCK|DELIVERY/i.test(name)) {
+        industry = "Logistics";
+        classification = "Logistics, Shipping & Supply Chain";
+        icon = "fa-truck-moving";
+      } else if (/BUILDING|CONSTRUCTION|FACILITIES|PROPERTY|ESTATE|ARCHITECT|M&E|ELEVATOR|LIFT|KONE|SCHINDLER|OTIS|MITSUBISHI|DEVELOPMENT|DESIGN & BUILD|SOIL-BUILD|WOH HUP|GUTHRIE|CONTRACTOR|PLASTER|DECORAT/i.test(name)) {
+        industry = "Built Environment";
+        classification = "Construction & Facilities Management";
+        icon = "fa-trowel-bricks";
+      } else if (/SEMICON|SEMICONDUCTOR|ELECTRONIC|MICROELECTRONICS|SILTRONIC|INFINEON|STMICRO|GLOBALFOUNDRIES|WAFER|SEMICON|CIRCUIT|MOLEX/i.test(name)) {
+        industry = "Microelectronics";
+        classification = "Semiconductor Manufacturing";
+        icon = "fa-microchip";
+      } else if (/SOFTWARE|SYSTEM|NETWORK|CLOUD|DATA|CYBER|CYBERSECURITY|INTEGRATION|DEVELOPMENT|IT|DIGITAL|TELECOM|COMPUTING|MALIFAX|NCS|HP |TELECOMMUNICATIONS|COMPUTERS/i.test(name)) {
+        industry = "Information Technology";
+        classification = "IT Systems & Software Services";
+        icon = "fa-laptop-code";
+      } else if (/HOSPITAL|CARE|NURSING|HEALTH|CLINIC|MEDICAL|REHAB|DIALYSIS|EYE CENTRE|PHARMA|DENTAL|AMBULANCE|SGH|TTSH|DOCTOR|MEDICINE|PHARMACEUTICAL/i.test(name)) {
+        industry = "Health";
+        classification = "Healthcare & Patient Services";
+        icon = "fa-house-medical";
+      } else if (/LANDSCAPE|LANDSCAPING|FARM|AGRICULTURE|AQUACULTURE|VEGETABLE|FISH|GARDEN|HORTICULTURE|ARBORICULTURE|SEEDS|PLANTS|TREES/i.test(name)) {
+        industry = "Landscape & Agriculture";
+        classification = "Landscape Services & Urban Farming";
+        icon = "fa-seedling";
+      } else if (/ACCOUNT|AUDIT|TAX|FINANCE|BANK|SERVICES|DELOITTE|EY|PWC|KPMG|VALUATION|SECRETARIAL|COMPLIANCE/i.test(name)) {
+        industry = "Finance & Corporate";
+        classification = "Accounting, Audit & Corporate Services";
+        icon = "fa-file-invoice-dollar";
+      } else if (/AUTOMATION|MANUFACTURING|FACTORY|PRECISION|ROBOTIC|MACHINE|ENGINEERING|PRECISION|INDUSTRIES|METAL|MACHINES|STEEL|GEAR|TOOL|CABLE/i.test(name)) {
+        industry = "Advanced Manufacturing";
+        classification = "Precision Engineering & Manufacturing";
+        icon = "fa-gears";
+      }
+      
+      c.detected_industry = industry;
+      c.classification = classification;
+      c.icon = icon;
+      c.description_snapshot = `A Singapore-registered business entity specializing in ${classification.toLowerCase()} within the ${industry.toLowerCase()} sector. Based on this profile, the company is highly suitable for WSDip sponsorships in technical and operational domains.`;
+    }
+
+    // DESCRIPTION TEXT CLASSIFIER
+    function classifyIndustryFromText(text) {
+      const lower = text.toLowerCase();
+      const score = {
+        Aviation: 0,
+        Logistics: 0,
+        Hospitality: 0,
+        IT: 0,
+        BuiltEnv: 0,
+        Micro: 0,
+        Mfg: 0,
+        Health: 0,
+        Landscape: 0,
+        Finance: 0
+      };
+
+      if (/aircraft|airport|aviation|aerospace|airline|flight|cabin|avionics|ramp|cargo handling/i.test(lower)) score.Aviation += 5;
+      if (/logistics|warehouse|shipping|supply chain|distripark|freight|maritime|port|delivery|fleet|truck|cargo/i.test(lower)) score.Logistics += 5;
+      if (/hotel|restaurant|culinary|kitchen|food|chef|cook|dining|accommodation|beverage|cafe|barista|catering|hospitality/i.test(lower)) score.Hospitality += 5;
+      if (/software|system|cyber|security|cloud|database|network|programming|developer|computer|it support|helpdesk|infrastructure|server|ict/i.test(lower)) score.IT += 5;
+      if (/building|facilities|property|construction|real estate|elevator|lift|escalator|aircon|mechanical|hvac|bim|architecture|civil|structural/i.test(lower)) score.BuiltEnv += 5;
+      if (/semiconductor|wafer|microchip|cleanroom|microelectronics|semicon|silicon/i.test(lower)) score.Micro += 5;
+      if (/manufacturing|automation|precision|robotic|plc|sensor|machine|assembly|cnc|tooling|gears|factory/i.test(lower)) score.Mfg += 5;
+      if (/nursing|hospital|clinic|patient|healthcare|medical|doctor|elderly care|rehabilitation|dialysis|pharmacy|ambulance/i.test(lower)) score.Health += 5;
+      if (/landscape|farm|horticulture|arboriculture|tree|plant|vegetable|agriculture|aquaculture|fish farm|greenhouse/i.test(lower)) score.Landscape += 5;
+      if (/accounting|audit|tax|finance|bookkeeping|bank|corporate services|ledger|invoice/i.test(lower)) score.Finance += 5;
+
+      let maxScore = 0;
+      let detected = null;
+      
+      for (const [key, value] of Object.entries(score)) {
+        if (value > maxScore) {
+          maxScore = value;
+          detected = key;
+        }
+      }
+
+      if (maxScore === 0) return null;
+
+      switch (detected) {
+        case 'Aviation': return 'Aviation';
+        case 'Logistics': return 'Logistics';
+        case 'Hospitality': return 'Hospitality';
+        case 'IT': return 'Information Technology';
+        case 'BuiltEnv': return 'Built Environment';
+        case 'Micro': return 'Microelectronics';
+        case 'Mfg': return 'Manufacturing';
+        case 'Health': return 'Health';
+        case 'Landscape': return 'Landscape';
+        case 'Finance': return 'Finance';
+        default: return null;
+      }
+    }
+
     // Load datasets from LocalStorage (if updated) or fall back to Embedded CSV strings
     function initData() {
       // 1. Load Company Data
@@ -4263,12 +4372,14 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
 
       // Convert grouped map back to list, setting 'scheme' as comma-separated string
       companyData = Array.from(companyMap.values()).map(c => {
-        return {
+        const enriched = {
           uen: c.uen,
           name: c.name,
           am: c.am,
           scheme: c.schemesList.join(', ')
         };
+        enrichCompanyRecord(enriched);
+        return enriched;
       });
 
       // 2. Load Course Data
@@ -4450,7 +4561,20 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
             <span class="status-badge registered"><i class="fa-solid fa-circle-check"></i> Existing Partner</span>
           </div>
           
-          <div class="company-info-grid">
+          <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+             <span class="course-tag ${getSectorTagClass(company.detected_industry)}" style="margin-bottom: 0;">
+                <i class="fa-solid ${company.icon}"></i> ${escapeHtml(company.detected_industry)}
+             </span>
+             <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">
+                Classification: <strong>${escapeHtml(company.classification)}</strong>
+             </span>
+          </div>
+          
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 12px; font-style: italic; background: rgba(255,255,255,0.02); padding: 10px 14px; border-radius: 8px; border: 1px dashed var(--border-color);">
+             <strong>Company Snapshot:</strong> ${escapeHtml(company.description_snapshot)}
+          </p>
+
+          <div class="company-info-grid" style="margin-top: 15px;">
             <div class="info-box">
               <div class="info-label">ACRA UEN</div>
               <div class="info-value info-value-mono">${escapeHtml(company.uen)}</div>
@@ -4477,6 +4601,10 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
       selectedCompany = null;
       const detailPanel = document.getElementById('company-detail-panel');
       const cleanName = queryText.toUpperCase();
+      
+      // Auto-classify the new company by its name to initialize its snapshot
+      const tempComp = { name: cleanName };
+      enrichCompanyRecord(tempComp);
 
       detailPanel.innerHTML = `
         <div class="company-card-header">
@@ -4485,7 +4613,20 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
             <span class="status-badge unregistered"><i class="fa-solid fa-circle-minus"></i> New Company</span>
           </div>
           
-          <div class="company-info-grid">
+          <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+             <span class="course-tag ${getSectorTagClass(tempComp.detected_industry)}" id="adv-tag" style="margin-bottom: 0;">
+                <i class="fa-solid ${tempComp.icon}" id="adv-icon"></i> <span id="adv-industry-txt">${escapeHtml(tempComp.detected_industry)}</span>
+             </span>
+             <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">
+                Classification: <strong id="adv-class-txt">${escapeHtml(tempComp.classification)}</strong>
+             </span>
+          </div>
+          
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 12px; font-style: italic; background: rgba(255,255,255,0.02); padding: 10px 14px; border-radius: 8px; border: 1px dashed var(--border-color);">
+             <strong>Company Snapshot:</strong> <span id="adv-desc-txt">${escapeHtml(tempComp.description_snapshot)}</span>
+          </p>
+
+          <div class="company-info-grid" style="margin-top: 15px;">
             <div class="info-box">
               <div class="info-label">ACRA UEN</div>
               <div class="info-value info-value-mono" style="color: var(--text-muted);">NOT FOUND IN AM REGISTRY</div>
@@ -4499,7 +4640,17 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
 
         <div class="unregistered-advisor">
           <h3 class="section-title" style="font-size: 1.1rem; margin-bottom: 8px;"><i class="fa-solid fa-shield-halved"></i> WSDip Engagement Advisor</h3>
-          <p>This company is not currently in our AM registry. Choose an industry below that best describes this company to generate suitable course fits:</p>
+          
+          <a href="https://www.google.com/search?q=${encodeURIComponent(cleanName)}+Singapore+industry" target="_blank" class="btn" style="display: inline-flex; width: fit-content; font-size: 0.85rem; padding: 8px 14px; margin-bottom: 15px; background: rgba(0, 242, 254, 0.08); border-color: var(--accent-cyan); color: var(--accent-cyan);">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> Search Google for "${escapeHtml(cleanName)}"
+          </a>
+
+          <div style="margin-bottom: 15px;">
+            <label class="info-label" style="display:block; margin-bottom:6px;">Smart Text Matcher (Paste company description / website 'About Us' text)</label>
+            <textarea id="advisor-pasted-text" class="search-input" style="height: 90px; padding: 10px; margin-bottom: 5px; font-family: inherit; resize: vertical;" placeholder="Paste company profile details from Google/Website here to automatically identify the industry and courses..." oninput="onPastedTextChange('${escapeHtml(cleanName)}')"></textarea>
+          </div>
+
+          <label class="info-label" style="display:block; margin-bottom:6px;">Manual Industry Override</label>
           <select id="advisor-industry" class="select-industry" onchange="runAdvisorMatching('${escapeHtml(cleanName)}')">
             <option value="">-- Select Industry Sector --</option>
             <option value="Aviation">Aviation / Aerospace / Airport Ground Handling</option>
@@ -4517,6 +4668,79 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
           <div id="advisor-results-wrap"></div>
         </div>
       `;
+
+      // Auto-trigger matches based on the initial name-based classification
+      document.getElementById('advisor-industry').value = tempComp.detected_industry;
+      runAdvisorMatching(cleanName);
+    }
+
+    function onPastedTextChange(companyName) {
+      const text = document.getElementById('advisor-pasted-text').value.trim();
+      const select = document.getElementById('advisor-industry');
+      const wrap = document.getElementById('advisor-results-wrap');
+
+      if (text.length < 10) {
+        // Fallback to name-based match
+        const temp = { name: companyName };
+        enrichCompanyRecord(temp);
+        select.value = temp.detected_industry;
+        runAdvisorMatching(companyName);
+        return;
+      }
+
+      // Detect industry using text-matching rules
+      const detected = classifyIndustryFromText(text);
+      if (detected) {
+        select.value = detected;
+        
+        // Update snapshot details in the UI dynamically
+        const tempComp = { name: companyName };
+        enrichCompanyRecord(tempComp);
+        
+        // Override with the text-detected industry details
+        const details = getIndustryDetails(detected);
+        document.getElementById('adv-industry-txt').innerText = detected;
+        document.getElementById('adv-class-txt').innerText = details.classification;
+        document.getElementById('adv-desc-txt').innerText = `Industry identified from pasted description. Company operates in ${details.classification.toLowerCase()} sector. ${tempComp.description_snapshot}`;
+        document.getElementById('adv-icon').className = `fa-solid ${details.icon}`;
+        document.getElementById('adv-tag').className = `course-tag ${getSectorTagClass(detected)}`;
+
+        // Match courses using the detected industry
+        const recommendations = matchCoursesForCompany(companyName, detected);
+        let recsHtml = `
+          <div style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; padding: 10px 12px; margin: 15px 0; font-size: 0.85rem; color: var(--accent-green);">
+             <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-detected Industry: <strong>${escapeHtml(detected)}</strong> based on description keywords.
+          </div>
+          <h4 class="section-title" style="font-size: 1rem; margin-top: 15px;"><i class="fa-solid fa-lightbulb"></i> Recommended Courses:</h4>
+        `;
+        
+        recommendations.forEach(rec => {
+          recsHtml += renderRecommendationCard(rec);
+        });
+        wrap.innerHTML = recsHtml;
+      } else {
+        wrap.innerHTML = `
+          <div style="background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 8px; padding: 10px 12px; margin: 15px 0; font-size: 0.85rem; color: var(--accent-amber);">
+             <i class="fa-solid fa-circle-info"></i> Paste successful, but no specific industry keywords detected. Please choose the sector manually from the dropdown override below.
+          </div>`;
+      }
+    }
+
+    // Helper to resolve industry classification metadata dynamically
+    function getIndustryDetails(industry) {
+      switch (industry) {
+        case 'Aviation': return { classification: "Aerospace & Airport Ground Services", icon: "fa-plane" };
+        case 'Logistics': return { classification: "Logistics, Shipping & Supply Chain", icon: "fa-truck-moving" };
+        case 'Hospitality': return { classification: "F&B and Accommodation Services", icon: "fa-hotel" };
+        case 'Information Technology': return { classification: "IT Systems & Software Services", icon: "fa-laptop-code" };
+        case 'Built Environment': return { classification: "Construction & Facilities Management", icon: "fa-trowel-bricks" };
+        case 'Microelectronics': return { classification: "Semiconductor Manufacturing", icon: "fa-microchip" };
+        case 'Manufacturing': return { classification: "Precision Engineering & Manufacturing", icon: "fa-gears" };
+        case 'Health': return { classification: "Healthcare & Patient Services", icon: "fa-house-medical" };
+        case 'Landscape': return { classification: "Landscape Services & Urban Farming", icon: "fa-seedling" };
+        case 'Finance': return { classification: "Accounting, Audit & Corporate Services", icon: "fa-file-invoice-dollar" };
+        default: return { classification: "Diversified Services & Trading", icon: "fa-building" };
+      }
     }
 
     function runAdvisorMatching(companyName) {
@@ -4526,6 +4750,13 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
       wrap.innerHTML = "";
 
       if (!selectedIndustry) return;
+
+      // Update UI header details if manually selected
+      const details = getIndustryDetails(selectedIndustry);
+      document.getElementById('adv-industry-txt').innerText = selectedIndustry;
+      document.getElementById('adv-class-txt').innerText = details.classification;
+      document.getElementById('adv-icon').className = `fa-solid ${details.icon}`;
+      document.getElementById('adv-tag').className = `course-tag ${getSectorTagClass(selectedIndustry)}`;
 
       // Match courses using the industry selected
       const recommendations = matchCoursesForCompany(companyName, selectedIndustry);
