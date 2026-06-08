@@ -4191,31 +4191,31 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
       let classification = "Diversified Services & Trading";
       let icon = "fa-building";
       
-      if (/VOCO|HOTEL|SHANGRI|GOODWOOD|ROYAL|RESTAURANT|FOOD|CATERING|CULINARY|BAKERY|SWEETS|DINING|MCDONALD|BURGER|CAFE|COFFEE|KECK SENG|RESORT|BEVERAGE|BREWERIES|BREWERY/i.test(name)) {
+      if (/VOCO|HOTEL|SHANGRI|GOODWOOD|\bHOTEL ROYAL\b|ROYAL PLAZA|RESTAURANT|FOOD|CATERING|CULINARY|BAKERY|SWEETS|DINING|MCDONALD|BURGER|CAFE|COFFEE|KECK SENG|RESORT|BEVERAGE|BREWERIES|BREWERY/i.test(name)) {
         industry = "Hospitality";
         classification = "F&B and Accommodation Services";
         icon = "fa-hotel";
-      } else if (/AIR|AVIATION|AEROSPACE|AIRLINES|GROUND|HANDLING|SATS|DNATA|FLIGHT|ROTOR|JET|CABIN|ENGINE/i.test(name)) {
+      } else if (/\bAIR\b|AVIATION|AEROSPACE|AIRLINES|GROUND\s+HANDLING|SATS|DNATA|FLIGHT|ROTOR|\bJET\b|CABIN|\bENGINES?\b/i.test(name)) {
         industry = "Aviation";
         classification = "Aerospace & Airport Ground Services";
         icon = "fa-plane";
-      } else if (/LOGISTICS|SHIPPING|WAREHOUSE|DISTRIPARK|DSV|YCH|EXPRESS|COURIER|FREIGHT|CARRIER|MARINE|PORT|AUTOMATION|SHIPPING|CARGO|CONTAINER|TRANSPORT|TRUCK|DELIVERY/i.test(name)) {
+      } else if (/LOGISTICS|SHIPPING|WAREHOUSE|DISTRIPARK|DSV|YCH|EXPRESS|COURIER|FREIGHT|CARRIER|MARINE|\bPORTS?\b|SHIPPING|CARGO|CONTAINER|TRANSPORT|TRUCK|DELIVERY/i.test(name)) {
         industry = "Logistics";
         classification = "Logistics, Shipping & Supply Chain";
         icon = "fa-truck-moving";
-      } else if (/BUILDING|CONSTRUCTION|FACILITIES|PROPERTY|ESTATE|ARCHITECT|M&E|ELEVATOR|LIFT|KONE|SCHINDLER|OTIS|MITSUBISHI|DEVELOPMENT|DESIGN & BUILD|SOIL-BUILD|WOH HUP|GUTHRIE|CONTRACTOR|PLASTER|DECORAT/i.test(name)) {
+      } else if (/BUILDING|CONSTRUCTION|FACILITIES|PROPERTY|ESTATE|ARCHITECT|M&E|ELEVATOR|LIFT|KONE|SCHINDLER|OTIS|MITSUBISHI|(?<!SOFTWARE\s|SYSTEMS?\s|IT\s|BUSINESS\s|SKILLS\s|HUMAN\s|CAREER\s|COMMUNITY\s|SOCIAL\s|CHINESE\s)DEVELOPMENT|DESIGN\s+&\s+BUILD|SOIL-BUILD|WOH\s+HUP|GUTHRIE|CONTRACTOR|PLASTER|DECORAT/i.test(name)) {
         industry = "Built Environment";
         classification = "Construction & Facilities Management";
         icon = "fa-trowel-bricks";
-      } else if (/SEMICON|SEMICONDUCTOR|ELECTRONIC|MICROELECTRONICS|SILTRONIC|INFINEON|STMICRO|GLOBALFOUNDRIES|WAFER|SEMICON|CIRCUIT|MOLEX/i.test(name)) {
+      } else if (/SEMICON|SEMICONDUCTOR|ELECTRONIC|MICROELECTRONICS|SILTRONIC|INFINEON|STMICRO|GLOBALFOUNDRIES|WAFER|CIRCUIT|MOLEX/i.test(name)) {
         industry = "Microelectronics";
         classification = "Semiconductor Manufacturing";
         icon = "fa-microchip";
-      } else if (/SOFTWARE|SYSTEM|NETWORK|CLOUD|DATA|CYBER|CYBERSECURITY|INTEGRATION|DEVELOPMENT|IT|DIGITAL|TELECOM|COMPUTING|MALIFAX|NCS|HP |TELECOMMUNICATIONS|COMPUTERS/i.test(name)) {
+      } else if (/SOFTWARE|\b(?<!LAND\s|LANDING\s|FIRE\s|SMBE\s|AUTOMATION\s|CONTROL\s|POWER\s|PROPULSION\s|MARINE\s)SYSTEMS?\b|NETWORK|CLOUD|DATA|CYBER|CYBERSECURITY|INTEGRATION|DEVELOPMENT|\bIT\b|DIGITAL|TELECOM|COMPUTING|MALIFAX|NCS|\bHP\b|TELECOMMUNICATIONS|\bCOMPUTERS?\b/i.test(name)) {
         industry = "Information Technology";
         classification = "IT Systems & Software Services";
         icon = "fa-laptop-code";
-      } else if (/HOSPITAL|CARE|NURSING|HEALTH|CLINIC|MEDICAL|REHAB|DIALYSIS|EYE CENTRE|PHARMA|DENTAL|AMBULANCE|SGH|TTSH|DOCTOR|MEDICINE|PHARMACEUTICAL/i.test(name)) {
+      } else if (/HOSPITAL|\bCARE\b|NURSING|HEALTH|CLINIC|MEDICAL|REHAB|DIALYSIS|EYE CENTRE|PHARMA\b|DENTAL|AMBULANCE|SGH|TTSH|DOCTOR|MEDICINE|PHARMACEUTICAL/i.test(name)) {
         industry = "Health";
         classification = "Healthcare & Patient Services";
         icon = "fa-house-medical";
@@ -4223,11 +4223,11 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
         industry = "Landscape & Agriculture";
         classification = "Landscape Services & Urban Farming";
         icon = "fa-seedling";
-      } else if (/ACCOUNT|AUDIT|TAX|FINANCE|BANK|SERVICES|DELOITTE|EY|PWC|KPMG|VALUATION|SECRETARIAL|COMPLIANCE/i.test(name)) {
+      } else if (/ACCOUNT|AUDIT|\bTAX\b|FINANCE|BANK|CORPORATE\s+SERVICES|FINANCIAL\s+SERVICES|DELOITTE|EY|PWC|KPMG|VALUATION|SECRETARIAL|COMPLIANCE/i.test(name)) {
         industry = "Finance & Corporate";
         classification = "Accounting, Audit & Corporate Services";
         icon = "fa-file-invoice-dollar";
-      } else if (/AUTOMATION|MANUFACTURING|FACTORY|PRECISION|ROBOTIC|MACHINE|ENGINEERING|PRECISION|INDUSTRIES|METAL|MACHINES|STEEL|GEAR|TOOL|CABLE/i.test(name)) {
+      } else if (/AUTOMATION|MANUFACTURING|FACTORY|PRECISION|ROBOTIC|MACHINE|ENGINEERING|INDUSTRIES|METAL|MACHINES|STEEL|GEAR|TOOL|CABLE/i.test(name)) {
         industry = "Advanced Manufacturing";
         classification = "Precision Engineering & Manufacturing";
         icon = "fa-gears";
@@ -4967,15 +4967,15 @@ Semiconductor equipment suppliers","Pass Colour Vision Test","","Need to work in
 
     function autoDetectSectors(companyName) {
       const sectors = [];
-      if (/VOCO|HOTEL|SHANGRI|GOODWOOD|ROYAL|RESTAURANT|FOOD|CATERING|CULINARY|BAKERY|SWEETS|DINING|MCDONALD|BURGER/i.test(companyName)) sectors.push('Hospitality');
-      if (/AIR|AVIATION|AEROSPACE|AIRLINES|GROUND|HANDLING|SATS|DNATA|FLIGHT/i.test(companyName)) sectors.push('Aviation');
-      if (/LOGISTICS|SHIPPING|WAREHOUSE|DISTRIPARK|DSV|YCH|EXPRESS|COURIER|FREIGHT|CARRIER|MARINE|PORT|AUTOMATION/i.test(companyName)) sectors.push('Logistics');
+      if (/VOCO|HOTEL|SHANGRI|GOODWOOD|\bHOTEL ROYAL\b|ROYAL PLAZA|RESTAURANT|FOOD|CATERING|CULINARY|BAKERY|SWEETS|DINING|MCDONALD|BURGER/i.test(companyName)) sectors.push('Hospitality');
+      if (/\bAIR\b|AVIATION|AEROSPACE|AIRLINES|GROUND\s+HANDLING|SATS|DNATA|FLIGHT/i.test(companyName)) sectors.push('Aviation');
+      if (/LOGISTICS|SHIPPING|WAREHOUSE|DISTRIPARK|DSV|YCH|EXPRESS|COURIER|FREIGHT|CARRIER|MARINE|\bPORTS?\b/i.test(companyName)) sectors.push('Logistics');
       if (/BUILDING|CONSTRUCTION|FACILITIES|PROPERTY|ESTATE|ARCHITECT|ENGINEERING|M&E|ELEVATOR|LIFT|KONE|SCHINDLER|OTIS|MITSUBISHI/i.test(companyName)) sectors.push('Built Environment');
       if (/SEMICON|SEMICONDUCTOR|ELECTRONIC|MICROELECTRONICS|SILTRONIC|INFINEON|STMICRO|GLOBALFOUNDRIES/i.test(companyName)) sectors.push('Microelectronics');
-      if (/SOFTWARE|SYSTEM|NETWORK|CLOUD|DATA|CYBER|CYBERSECURITY|INTEGRATION|DEVELOPMENT|IT|DIGITAL/i.test(companyName)) sectors.push('Information Technology');
-      if (/HOSPITAL|CARE|NURSING|HEALTH|CLINIC|MEDICAL|REHAB|DIALYSIS/i.test(companyName)) sectors.push('Health');
+      if (/SOFTWARE|\b(?<!LAND\s|LANDING\s|FIRE\s|SMBE\s|AUTOMATION\s|CONTROL\s|POWER\s|PROPULSION\s|MARINE\s)SYSTEMS?\b|NETWORK|CLOUD|DATA|CYBER|CYBERSECURITY|INTEGRATION|DEVELOPMENT|\bIT\b|DIGITAL/i.test(companyName)) sectors.push('Information Technology');
+      if (/HOSPITAL|\bCARE\b|NURSING|HEALTH|CLINIC|MEDICAL|REHAB|DIALYSIS/i.test(companyName)) sectors.push('Health');
       if (/LANDSCAPE|LANDSCAPING|FARM|AGRICULTURE|AQUACULTURE|VEGETABLE|FISH|GARDEN/i.test(companyName)) sectors.push('Landscape');
-      if (/ACCOUNT|AUDIT|TAX|FINANCE|BANK|SERVICES|DELOITTE|EY|PWC|KPMG/i.test(companyName)) sectors.push('Finance');
+      if (/ACCOUNT|AUDIT|\bTAX\b|FINANCE|BANK|CORPORATE\s+SERVICES|FINANCIAL\s+SERVICES|DELOITTE|EY|PWC|KPMG/i.test(companyName)) sectors.push('Finance');
       if (/AUTOMATION|MANUFACTURING|FACTORY|PRECISION|ROBOTIC|MACHINE/i.test(companyName)) sectors.push('Manufacturing');
       return sectors;
     }
